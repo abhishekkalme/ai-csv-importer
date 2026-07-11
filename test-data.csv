@@ -1,0 +1,13 @@
+Full Name,Email Address,Phone Number,Company Name,Lead Source,Status,Notes,Date Created
+John Doe,john.doe@example.com,+919876543210,TechCorp India,Facebook Lead,New,Interested in enterprise plan,2026-05-13 14:20:48
+Sarah Johnson,sarah.j@outlook.com,+14155551234,Sarah Designs,Google Ads,Follow Up,Needs demo scheduled,2026-05-12 09:15:00
+Rajesh Patel,rajesh@startup.io,9876543211,StartupHub,Website Form,Contacted,Referred by John Doe,2026-05-11 16:45:22
+Priya Singh,priya.singh@gmail.com,+91-8765432109,Enterprise Corp Mumbai,LinkedIn,,Meeting booked for Friday,2026-05-10 11:30:00
+,unknown_mail@test.com,5551234567,Unknown Co,Facebook Lead,New,Missing name field,2026-05-09 08:00:00
+Amit Kumar,"amit.kumar@yahoo.in;amit@work.com",+917654321098,Analytics Pro,Excel Import,Qualified,Primary email is personal work email in notes,2026-05-08 13:20:15
+,,,Manual Entry,,,No contact info at all - should be skipped,2026-05-07 10:00:00
+Maria Garcia,maria@designlab.com,+34612345678,DesignLab Spain,Google Ads,Follow Up,Spanish market lead,2026-05-06 15:45:30
+Wei Zhang,wei.zhang@corp.cn,+8613812345678,Zhang Corp Asia,Facebook Lead,New,Large enterprise deal,2026-05-05 07:30:00
+"Bob Johnson;Robert Johnson",bob.j@gmail.com,+447911123456,Johnson Ltd,Excel Sheets,Contacted,Multiple emails and phones test,2026-05-04 12:00:00
+Anjali Menon,anjali@realestate.in,+919988776655,Skyline Builders,Varah Swamy,New,Possession by Dec 2026,2026-05-03 14:15:00
+Carlos Silva,carlos@marketing.br,+5511987654321,Silva Marketing,Brazil Campaign,Qualified,Latin America expansion,2026-05-02 10:30:00
