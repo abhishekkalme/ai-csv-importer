@@ -45,19 +45,50 @@ export interface JobStatusResponse {
   error?: string
 }
 
+export class ApiError extends Error {
+  url: string
+  status?: number
+  body?: string
+
+  constructor(message: string, url: string, status?: number, body?: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.url = url
+    this.status = status
+    this.body = body
+  }
+}
+
+async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
+  let response: Response
+  try {
+    response = await fetch(url, options)
+  } catch (err) {
+    if (err instanceof ApiError) throw err
+    const baseMsg = err instanceof TypeError && err.message === 'Failed to fetch'
+      ? `Network error — cannot reach the server at ${url}. This usually means CORS is misconfigured or the server is down.`
+      : err instanceof Error ? err.message : 'Unknown network error'
+    throw new ApiError(`${baseMsg}`, url)
+  }
+
+  if (!response.ok) {
+    let body = ''
+    try { body = await response.text() } catch { /* ignore */ }
+    const summary = body ? `HTTP ${response.status}: ${body.slice(0, 300)}` : `HTTP ${response.status} ${response.statusText}`
+    throw new ApiError(summary, url, response.status, body)
+  }
+
+  return response
+}
+
 export async function uploadCSV(file: File): Promise<UploadResponse> {
   const formData = new FormData()
   formData.append('csv', file)
 
-  const response = await fetch(`${API_BASE}/api/upload`, {
+  const response = await apiFetch(`${API_BASE}/api/upload`, {
     method: 'POST',
     body: formData,
   })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.error || 'Failed to upload CSV')
-  }
 
   return response.json()
 }
@@ -67,17 +98,12 @@ export async function processCSV(
   signal?: AbortSignal,
   onProgress?: (phase: string, progress: number, message: string) => void
 ): Promise<ProcessResponse> {
-  const startRes = await fetch(`${API_BASE}/api/process`, {
+  const startRes = await apiFetch(`${API_BASE}/api/process`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ filename }),
     signal,
   })
-
-  if (!startRes.ok) {
-    const errorData = await startRes.json()
-    throw new Error(errorData.error || 'Failed to process CSV')
-  }
 
   const { jobId } = await startRes.json()
   onProgress?.('mapping', 0, 'AI is analyzing columns...')
@@ -87,9 +113,7 @@ export async function processCSV(
 
     await new Promise((r) => setTimeout(r, 1500))
 
-    const statusRes = await fetch(`${API_BASE}/api/process/${jobId}/status`, { signal })
-    if (!statusRes.ok) throw new Error('Failed to fetch job status')
-
+    const statusRes = await apiFetch(`${API_BASE}/api/process/${jobId}/status`, { signal })
     const status: JobStatusResponse = await statusRes.json()
     onProgress?.(status.phase, status.progress, status.message)
 
@@ -99,12 +123,7 @@ export async function processCSV(
 }
 
 export async function fetchLeads(): Promise<Lead[]> {
-  const response = await fetch(`${API_BASE}/api/leads`)
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch leads')
-  }
-
+  const response = await apiFetch(`${API_BASE}/api/leads`)
   const data = await response.json()
   return data.leads || []
 }

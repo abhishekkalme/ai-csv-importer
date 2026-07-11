@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import Papa from 'papaparse'
-import { uploadCSV, processCSV } from '@/services/api'
+import { uploadCSV, processCSV, ApiError } from '@/services/api'
 import type { ProcessResult, Step } from '@/types'
 
 interface ImportCSVModalProps {
@@ -19,6 +19,7 @@ export default function ImportCSVModal({ isOpen, onClose }: ImportCSVModalProps)
   const [totalRows, setTotalRows] = useState(0)
   const [result, setResult] = useState<ProcessResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorDetails, setErrorDetails] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [progressMessage, setProgressMessage] = useState('')
@@ -32,6 +33,7 @@ export default function ImportCSVModal({ isOpen, onClose }: ImportCSVModalProps)
     setTotalRows(0)
     setResult(null)
     setError(null)
+    setErrorDetails(null)
     setUploading(false)
     setProcessing(false)
     setProgressMessage('')
@@ -168,8 +170,16 @@ export default function ImportCSVModal({ isOpen, onClose }: ImportCSVModalProps)
       clearTimeout(patienceId)
       if (err instanceof DOMException && err.name === 'AbortError') {
         setError('Request timed out after 3 minutes. The AI service may be overloaded. Please try again.')
+        setErrorDetails(null)
+      } else if (err instanceof ApiError) {
+        setError(err.message)
+        const parts = [`URL: ${err.url}`]
+        if (err.status) parts.push(`Status: ${err.status}`)
+        if (err.body) parts.push(`Response: ${err.body.slice(0, 500)}`)
+        setErrorDetails(parts.join('\n'))
       } else {
         setError(err instanceof Error ? err.message : 'Processing failed')
+        setErrorDetails(null)
       }
       setStep('preview')
     } finally {
@@ -218,11 +228,21 @@ export default function ImportCSVModal({ isOpen, onClose }: ImportCSVModalProps)
 
         {/* Error Banner */}
         {error && (
-          <div className="mx-8 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start dark:bg-red-900/30 dark:border-red-800">
-            <svg className="w-5 h-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+          <div className="mx-8 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl dark:bg-red-900/30 dark:border-red-800">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-red-700 dark:text-red-400 whitespace-pre-wrap break-words">{error}</p>
+                {errorDetails && (
+                  <details className="mt-2">
+                    <summary className="text-xs text-red-500 cursor-pointer hover:text-red-700 dark:hover:text-red-300">Technical details</summary>
+                    <pre className="mt-1 text-xs text-red-600 dark:text-red-400 bg-red-100/50 dark:bg-red-950/30 p-2 rounded overflow-auto max-h-32">{errorDetails}</pre>
+                  </details>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
